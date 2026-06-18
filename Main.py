@@ -1,5 +1,6 @@
 import sqlite3
 import hashlib
+import random
 
 # Connect
 conn = sqlite3.connect("stock_sim.db")
@@ -69,5 +70,27 @@ while not logged_in:
 
 
 print("Welcome to Stock Market Simulator")
+while True:
+    print("1.View Market")
+    print("2.Buy Stocks")
+    print("3.Sell Stocks")
+    print("4.Transaction history")
+    print("5.Account info")
 
-conn.close()
+    menu_choice = int(input("> "))
+
+    if menu_choice == 1:
+        while True:
+            print("DEBUG: entered market menu")
+
+            cur.execute("SELECT * FROM stocks")
+            stocks = cur.fetchall()
+
+            for stock in stocks:
+                print(stock[1] + " | $" + str(stock[2]))
+            print("1.go back")
+            choice = int(input("> "))
+            if choice == 1: 
+                break
+
+print("less go")
