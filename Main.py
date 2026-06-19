@@ -1,7 +1,7 @@
 import sqlite3
 import hashlib
 import random
-
+import time
 # Connect
 conn = sqlite3.connect("stock_sim.db")
 cur = conn.cursor()
@@ -85,7 +85,68 @@ while not logged_in:
         print("Account Created!")
         print("--------------------------------")
 
+
+def show_market():
+
+    cur.execute("SELECT * FROM stocks")
+    stocks = cur.fetchall()
+
+    print("--------------------------------")
+    print("SYMBOL\tPRICE")
+    print("--------------------------------")
+
+    for i in stocks:
+        print(i[1], "\t$", i[2])
+
+    print("--------------------------------")
+
+def crash():
+    return random.uniform(-20, -10)
+
+def boom():
+    return random.uniform(10, 20)
+
+def bear():
+    return random.uniform(-8, -3)
+
+def bull():
+    return random.uniform(3, 8)
+
+def stable():
+    return random.uniform(-1, 1)
+
+def little_up():
+    return random.uniform(1, 3)
+
+def little_down():
+    return random.uniform(-3, -1)
+
+def update_market():
+    cur.execute("SELECT * FROM stocks")
+    stocks = cur.fetchall()
+    event = random.choices([crash, boom, bear, bull, stable, little_up, little_down],
+    weights=[2, 2, 10, 10, 50, 13, 13])[0]
+    
+    for stock in stocks:
+        change = event()
+        new_price = stock[2] * (1 + change / 100)
+
+        if new_price < 1:
+            new_price = 1
+
+        cur.execute("UPDATE stocks SET price = ? WHERE id = ?",(round(new_price, 2), stock[0]))
+    conn.commit()
+
+last_update = time.time()
+
 while True:
+    current_time = time.time()
+
+    if current_time - last_update >= 30:
+        update_market()
+        print("Market Updated!")
+        last_update = current_time
+
     print("--------------------------------")
     print("Stock Market Simulator")
     print("Balance: $", user[2])
@@ -100,17 +161,9 @@ while True:
     menu_choice = int(input("> "))
     if menu_choice == 1:
         while True:
-            cur.execute("SELECT * FROM stocks")
-            stocks = cur.fetchall()
-
-            print("--------------------------------")
-            print("SYMBOL\tPRICE")
-            print("--------------------------------")
-
-            for i in stocks:
-                print(i[1], "\t$", i[2])
-            print("--------------------------------")
-            print("1.go back")
+            show_market()
+            print("1. Go Back")
             choice = int(input("> "))
-            if choice == 1: 
+
+            if choice == 1:
                 break
