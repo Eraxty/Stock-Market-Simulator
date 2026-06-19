@@ -82,7 +82,7 @@ while not logged_in:
         cur.execute("""INSERT INTO users (username, balance, password) VALUES (?, ?, ?)""",(username, 100000 ,pass_hash))
         conn.commit()
         print("--------------------------------")
-        print("Account Created!")
+        print("Account Created!") 
         print("--------------------------------")
 
 
@@ -126,7 +126,7 @@ def update_market():
     stocks = cur.fetchall()
     event = random.choices([crash, boom, bear, bull, stable, little_up, little_down],
     weights=[2, 2, 10, 10, 50, 13, 13])[0]
-    
+
     for stock in stocks:
         change = event()
         new_price = stock[2] * (1 + change / 100)
