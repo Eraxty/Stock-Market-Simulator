@@ -7,6 +7,12 @@ conn = sqlite3.connect("stock_sim.db")
 cur = conn.cursor()
 
 logged_in = False
+def get_balance():
+
+    cur.execute("SELECT balance FROM users WHERE username = ?",(user[1],))
+    balance = cur.fetchone()
+    return balance[0]
+
 while not logged_in:
     print("--------------------------------")
     print("1. Login")
@@ -79,7 +85,8 @@ while not logged_in:
         password = input("Choose password: ")
 
         pass_hash = hashlib.sha256(password.encode()).hexdigest()
-        cur.execute("""INSERT INTO users (username, balance, password) VALUES (?, ?, ?)""",(username, 100000 ,pass_hash))
+        balance = 100000
+        cur.execute("""INSERT INTO users (username, balance, password) VALUES (?, ?, ?)""",(username, balance ,pass_hash))
         conn.commit()
         print("--------------------------------")
         print("Account Created!") 
@@ -149,7 +156,7 @@ while True:
 
     print("--------------------------------")
     print("Stock Market Simulator")
-    print("Balance: $", user[2])
+    print("Balance: $", get_balance())
     print("--------------------------------")
     print("1.View Market")
     print("2.Buy Stocks")
@@ -167,3 +174,39 @@ while True:
 
             if choice == 1:
                 break
+    
+    if menu_choice == 2:
+        show_market()
+        stock_id = int(input("Select Stock ID: "))
+        cur.execute(
+        "SELECT * FROM stocks WHERE id = ?",(stock_id,))
+        stock = cur.fetchone()
+        if stock is None:
+            print("Invalid Stock ID")
+            continue
+        shares = int(input("Enter Shares: "))
+        cost = stock[2] * shares
+        balance = get_balance() - cost
+        print("--------------------------------")
+        print("Stock:", stock[1])
+        print("Price: $", stock[2])
+        print("Shares:", shares)
+        print("Total Cost: $", round(cost, 2))
+        print("Balance After $",balance)
+        print("--------------------------------")
+        print("1. Confirm")
+        print("2. Cancel")
+        print("--------------------------------")
+
+        confirm = input("> ")
+
+        if confirm != "1":
+            continue
+
+        if cost > get_balance():
+            print("Not enough balance")
+            continue
+
+        cur.execute("UPDATE users SET balance = ? WHERE username = ?",(balance, user[1]))
+        cur.execute("""INSERT INTO portfolio (symbol, shares, username) VALUES (?, ?, ?)""",(stock[1], shares, user[1]))
+        conn.commit()
