@@ -208,8 +208,9 @@ while True:
 
         cur.execute("UPDATE users SET balance = ? WHERE username = ?",(balance, user[1]))
         cur.execute("SELECT * FROM portfolio WHERE username = ? AND symbol = ?",(user[1], stock[1]))
-        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)", (user[0], stock[0], "BUY", shares, stock[2]))
         holding = cur.fetchone()
+        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)", (user[0], stock[0], "BUY", shares, stock[2]))
+        
 
         if holding != None:
             new_shares = holding[2] + shares
