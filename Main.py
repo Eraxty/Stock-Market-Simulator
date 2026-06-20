@@ -231,3 +231,27 @@ while True:
             total = t[4] * t[5]
             print(t[3],"Stock ID:", t[2],"Shares:", t[4],"Price:$", round(t[5], 2), "Total:$", round(total, 2))
         print("--------------------------------")
+        print("--------------------------------")
+        print("1. Go Back")
+        choice = input("> ") #pressing down button on elevator when u wanna go up 
+    
+    if menu_choice == 5:
+
+        print("--------------------------------")
+        print("ACCOUNT INFO")
+        print("--------------------------------")
+
+        print("Username:", user[1])
+        print("Balance: $", round(get_balance(), 2))
+
+        cur.execute("SELECT SUM(shares) FROM portfolio WHERE username = ?",(user[1],))
+
+        total_shares = cur.fetchone()[0]
+
+        if total_shares is None:
+            total_shares = 0
+
+        print("Total Shares:", total_shares)
+        print("--------------------------------")
+        print("1. Go Back")
+        choice = input("> ")  # elevator again 
