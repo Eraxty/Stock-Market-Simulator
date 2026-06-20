@@ -17,7 +17,7 @@ while not logged_in:
     print("--------------------------------")
     print("1. Login")
     print("2. Create Account")
-    print("--------------------------------")
+    print("----------------u----------------")
 
     login_choice = input("> ")
 
@@ -101,10 +101,9 @@ def show_market():
     print("--------------------------------")
     print("SYMBOL\tPRICE")
     print("--------------------------------")
-
+ 
     for i in stocks:
-        print(i[1], "\t$", i[2])
-
+        print(f"{i[0]:<3} {i[1]:<8} ${i[2]:.2f}")
     print("--------------------------------")
 
 def crash():
@@ -156,7 +155,7 @@ while True:
 
     print("--------------------------------")
     print("Stock Market Simulator")
-    print("Balance: $", get_balance())
+    print("Balance: $", round(get_balance()))
     print("--------------------------------")
     print("1.View Market")
     print("2.Buy Stocks")
@@ -208,5 +207,27 @@ while True:
             continue
 
         cur.execute("UPDATE users SET balance = ? WHERE username = ?",(balance, user[1]))
-        cur.execute("""INSERT INTO portfolio (symbol, shares, username) VALUES (?, ?, ?)""",(stock[1], shares, user[1]))
+        cur.execute("SELECT * FROM portfolio WHERE username = ? AND symbol = ?",(user[1], stock[1]))
+        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)", (user[0], stock[0], "BUY", shares, stock[2]))
+        holding = cur.fetchone()
+
+        if holding != None:
+            new_shares = holding[2] + shares
+            cur.execute("UPDATE portfolio SET shares = ? WHERE id = ?",(new_shares, holding[0]))
+            
+        else:
+            cur.execute("INSERT INTO portfolio(symbol, shares, username)VALUES (?, ?, ?)",(stock[1], shares, user[1]))
         conn.commit()
+    
+    if menu_choice == 4:
+        cur.execute("SELECT * FROM transactions WHERE user_id = ?",(user[0],))
+        transactions = cur.fetchall()
+
+        print("--------------------------------")
+        print("TRANSACTION HISTORY")
+        print("--------------------------------")
+
+        for t in transactions:
+            total = t[4] * t[5]
+            print(t[3],"Stock ID:", t[2],"Shares:", t[4],"Price:$", round(t[5], 2), "Total:$", round(total, 2))
+        print("--------------------------------")
