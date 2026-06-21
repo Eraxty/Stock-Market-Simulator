@@ -11,7 +11,7 @@ while not logged_in:
     print("--------------------------------")
     print("1. Login")
     print("2. Create Account")
-    print("----------------u----------------")
+    print("--------------------------------")
 
     login_choice = input("> ")
 
