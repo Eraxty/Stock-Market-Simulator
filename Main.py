@@ -7,12 +7,6 @@ conn = sqlite3.connect("stock_sim.db")
 cur = conn.cursor()
 
 logged_in = False
-def get_balance():
-
-    cur.execute("SELECT balance FROM users WHERE username = ?",(user[1],))
-    balance = cur.fetchone()
-    return balance[0]
-
 while not logged_in:
     print("--------------------------------")
     print("1. Login")
@@ -26,10 +20,10 @@ while not logged_in:
             print("--------------------------------")
             username = input("Enter username: ")
             print("--------------------------------")
-            cur.execute("SELECT * FROM users WHERE username = ?",(username,))
+            cur.execute("SELECT * FROM users WHERE username = ?",(username,)) #search for username
             user = cur.fetchone()
 
-            if user is None:
+            if user is None: #username not found
                 print("--------------------------------")
                 print("User not found")
                 print("--------------------------------")
@@ -43,12 +37,12 @@ while not logged_in:
                 else:
                     break
 
-            while True:
+            while True: #username found enter password
                 print("--------------------------------")
                 password = input("Enter password: ")
                 print("--------------------------------")
-                pass_hash = hashlib.sha256(password.encode()).hexdigest()
-                if pass_hash == user[3]:
+                pass_hash = hashlib.sha256(password.encode()).hexdigest() #hash the pass bcs storing plain text is bad
+                if pass_hash == user[3]: #compare the hashes 
                     print("--------------------------------")
                     print("Login Successful")
                     print("--------------------------------")
@@ -69,14 +63,14 @@ while not logged_in:
                     break
 
             if logged_in:
-                breaki
+                break
 
-    elif login_choice == "2":
+    elif login_choice == "2": #user creation
 
         username = input("Choose username: ")
         cur.execute("SELECT * FROM users WHERE username = ?",(username,))
 
-        if cur.fetchone():
+        if cur.fetchone() != None: #check if user exist
             print("--------------------------------")
             print("Username already exists")
             print("--------------------------------")
@@ -84,17 +78,21 @@ while not logged_in:
 
         password = input("Choose password: ")
 
-        pass_hash = hashlib.sha256(password.encode()).hexdigest()
-        balance = 100000
+        pass_hash = hashlib.sha256(password.encode()).hexdigest() #hash the pass
+        balance = 100000 #initial balancce given
         cur.execute("""INSERT INTO users (username, balance, password) VALUES (?, ?, ?)""",(username, balance ,pass_hash))
         conn.commit()
         print("--------------------------------")
         print("Account Created!") 
         print("--------------------------------")
 
+def get_balance(): #very useful function
+    cur.execute("SELECT balance FROM users WHERE username = ?",(user[1],))
+    balance = cur.fetchone()
+    return balance[0]
 
-def show_market():
 
+def show_market(): #shows the stocks
     cur.execute("SELECT * FROM stocks")
     stocks = cur.fetchall()
 
@@ -103,9 +101,10 @@ def show_market():
     print("--------------------------------")
  
     for i in stocks:
-        print(f"{i[0]:<3} {i[1]:<8} ${i[2]:.2f}")
+        print(f"{i[0]:<3} {i[1]:<8} ${i[2]:.2f}") #actuall formating
     print("--------------------------------")
 
+#bunch of functions which give random value so we can control market
 def crash():
     return random.uniform(-20, -10)
 
@@ -127,11 +126,11 @@ def little_up():
 def little_down():
     return random.uniform(-3, -1)
 
-def update_market():
+def update_market(): #update market aka change prices of stock
     cur.execute("SELECT * FROM stocks")
     stocks = cur.fetchall()
-    event = random.choices([crash, boom, bear, bull, stable, little_up, little_down],
-    weights=[2, 2, 10, 10, 50, 13, 13])[0]
+    event = random.choices([crash, boom, bear, bull, stable, little_up, little_down], #choses 1 of random to apply 
+    weights=[2, 2, 10, 10, 50, 13, 13])[0] #functions have weight some are more often than others 
 
     for stock in stocks:
         change = event()
@@ -148,12 +147,12 @@ last_update = time.time()
 while True:
     current_time = time.time()
 
-    if current_time - last_update >= 30:
+    if current_time - last_update >= 30: #update market every 30 secs
         update_market()
         print("Market Updated!")
         last_update = current_time
 
-    print("--------------------------------")
+    print("--------------------------------") #Main Menu 
     print("Stock Market Simulator")
     print("Balance: $", round(get_balance()))
     print("--------------------------------")
@@ -167,7 +166,7 @@ while True:
     menu_choice = int(input("> "))
 
 
-    if menu_choice == 1:
+    if menu_choice == 1: #shows market
         while True:
             show_market()
             print("1. Go Back")
@@ -180,10 +179,9 @@ while True:
     if menu_choice == 2:
         show_market()
         stock_id = int(input("Select Stock ID: "))
-        cur.execute(
-        "SELECT * FROM stocks WHERE id = ?",(stock_id,))
+        cur.execute("SELECT * FROM stocks WHERE id = ?",(stock_id,))
         stock = cur.fetchone()
-        if stock is None:
+        if stock is None: #stop user bcs stock doesnt exist
             print("Invalid Stock ID")
             continue
         shares = int(input("Enter Shares: "))
@@ -209,9 +207,15 @@ while True:
             print("Not enough balance")
             continue
 
+        #subtract purchase cost from users balance
         cur.execute("UPDATE users SET balance = ? WHERE username = ?",(balance, user[1]))
+
+        #create holding to check if user has stock or no 
         cur.execute("SELECT * FROM portfolio WHERE username = ? AND symbol = ?",(user[1], stock[1]))
         holding = cur.fetchone()
+        
+
+        #record transaction history
         cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)", (user[0], stock[0], "BUY", shares, stock[2]))
         
 
@@ -224,7 +228,7 @@ while True:
         conn.commit()
 
 
-    if menu_choice == 3:
+    if menu_choice == 3: #sell
         cur.execute("SELECT * FROM portfolio WHERE username = ?",(user[1],))
 
         holdings = cur.fetchall()
@@ -249,7 +253,7 @@ while True:
 
         shares = int(input("Number of shares: "))
 
-        if shares > hold[2]:
+        if shares > hold[2]: # prevent selling more than owned
             print("Not enough shares")
             continue
 
@@ -257,8 +261,9 @@ while True:
         stock = cur.fetchone()
 
         sale_value = stock[2] * shares
-
-        print("--------------------------------")
+        
+        #menu for sale
+        print("--------------------------------") 
         print("Stock:", hold[1])
         print("Price: $", stock[2])
         print("Shares:", shares)
@@ -274,22 +279,22 @@ while True:
         if confirm != "1":
             continue
 
-        new_balance = get_balance() + sale_value
+        new_balance = get_balance() + sale_value #new balance
 
         cur.execute("UPDATE users SET balance = ? WHERE username = ?",(new_balance, user[1]))
 
-        remaining = hold[2] - shares
+        remaining = hold[2] - shares # calculate remaining shares after sale
 
         if remaining == 0:
             cur.execute("DELETE FROM portfolio WHERE id = ?",(hold[0],))
 
-        else:
+        else: #update remaining shares
             cur.execute("UPDATE portfolio SET shares = ? WHERE id = ?",(remaining, hold[0]))
 
         cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)",(user[0], stock[0], "SELL", shares, stock[2]))
         conn.commit()
 
-        print("Successful")
+        print("Successful") #print successfull
 
 
     if menu_choice == 4:
@@ -300,7 +305,7 @@ while True:
         print("TRANSACTION HISTORY")
         print("--------------------------------")
 
-        for t in transactions:
+        for t in transactions: #display transactions
             total = t[4] * t[5]
             print(t[3],"Stock ID:", t[2],"Shares:", t[4],"Price:$", round(t[5], 2), "Total:$", round(total, 2))
         print("--------------------------------")
