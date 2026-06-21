@@ -64,11 +64,32 @@ This release was built and tested on **Linux (Arch Linux x86_64)** using PyInsta
 
 The executable included in the GitHub Release is intended for Linux systems. Users on Windows or mac should run the project from source using python.
 
-### Running from Source
+## Running from Source
+
+### Requirements
+- Python 3.10+
+- SQLite3 (included with most Python installations)
+
+### Installation
+
+1. Clone the repository:
+
+```bash
+git clone https://github.com/Eraxty/Stock-Market-Simulator.git
+cd Stock-Market-Simulator
+```
+
+2. Run the program:
 
 ```bash
 python Main.py
 ```
+
+### Platform Support
+
+- Linux (Arch Linux x86_64) - Tested
+- Windows - Should work when run from source
+- macOS - Should work when run from source
 
 ### GitHub Release
 
