@@ -69,7 +69,7 @@ while not logged_in:
                     break
 
             if logged_in:
-                break
+                breaki
 
     elif login_choice == "2":
 
@@ -165,6 +165,8 @@ while True:
     print("--------------------------------")
 
     menu_choice = int(input("> "))
+
+
     if menu_choice == 1:
         while True:
             show_market()
@@ -174,6 +176,7 @@ while True:
             if choice == 1:
                 break
     
+
     if menu_choice == 2:
         show_market()
         stock_id = int(input("Select Stock ID: "))
@@ -219,7 +222,76 @@ while True:
         else:
             cur.execute("INSERT INTO portfolio(symbol, shares, username)VALUES (?, ?, ?)",(stock[1], shares, user[1]))
         conn.commit()
-    
+
+
+    if menu_choice == 3:
+        cur.execute("SELECT * FROM portfolio WHERE username = ?",(user[1],))
+
+        holdings = cur.fetchall()
+
+        if len(holdings) == 0:
+            print("No holdings found")
+            continue
+
+        print("--------------------------------")
+        print("YOUR HOLDINGS")
+        print("--------------------------------")
+
+        n = 1
+        for h in holdings:
+            print(f"{n:<3} {h[1]:<8} {h[2]}")
+            n = n + 1
+
+        print("--------------------------------")
+
+        choice = int(input("Sell> "))
+        hold = holdings[choice - 1]
+
+        shares = int(input("Number of shares: "))
+
+        if shares > hold[2]:
+            print("Not enough shares")
+            continue
+
+        cur.execute("SELECT * FROM stocks WHERE symbol = ?",(hold[1],))
+        stock = cur.fetchone()
+
+        sale_value = stock[2] * shares
+
+        print("--------------------------------")
+        print("Stock:", hold[1])
+        print("Price: $", stock[2])
+        print("Shares:", shares)
+        print("You Receive: $", round(sale_value, 2))
+        print("Balance After: $", round(get_balance() + sale_value, 2))
+        print("--------------------------------")
+        print("1. Confirm")
+        print("2. Cancel")
+        print("--------------------------------")
+
+        confirm = input("> ")
+
+        if confirm != "1":
+            continue
+
+        new_balance = get_balance() + sale_value
+
+        cur.execute("UPDATE users SET balance = ? WHERE username = ?",(new_balance, user[1]))
+
+        remaining = hold[2] - shares
+
+        if remaining == 0:
+            cur.execute("DELETE FROM portfolio WHERE id = ?",(hold[0],))
+
+        else:
+            cur.execute("UPDATE portfolio SET shares = ? WHERE id = ?",(remaining, hold[0]))
+
+        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)",(user[0], stock[0], "SELL", shares, stock[2]))
+        conn.commit()
+
+        print("Successful")
+
+
     if menu_choice == 4:
         cur.execute("SELECT * FROM transactions WHERE user_id = ?",(user[0],))
         transactions = cur.fetchall()
@@ -236,8 +308,8 @@ while True:
         print("1. Go Back")
         choice = input("> ") #pressing down button on elevator when u wanna go up 
     
-    if menu_choice == 5:
 
+    if menu_choice == 5:
         print("--------------------------------")
         print("ACCOUNT INFO")
         print("--------------------------------")
