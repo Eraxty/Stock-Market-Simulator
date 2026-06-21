@@ -57,11 +57,22 @@ The market updates every 30 seconds. Each stock price is modified by a randomly 
 * Small Decrease
 
 Different events have different Weights (probability)
-## Running the Project
+
+## Platform Support
+
+This release was built and tested on **Linux (Arch Linux x86_64)** using PyInstaller.
+
+The executable included in the GitHub Release is intended for Linux systems. Users on Windows or mac should run the project from source using python.
+
+### Running from Source
 
 ```bash
 python Main.py
 ```
+
+### GitHub Release
+
+Download the latest release from the Releases page.
 
 ## Workflow
 
