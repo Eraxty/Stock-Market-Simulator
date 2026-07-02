@@ -68,7 +68,7 @@ The executable included in the GitHub Release is intended for Linux systems. Use
 
 ### Requirements
 - Python 3.10+
-- SQLite3 (included with most Python installations)
+- SQLite3
 
 ### Installation
 
@@ -84,17 +84,6 @@ cd Stock-Market-Simulator
 ```bash
 python Main.py
 ```
-
-### Platform Support
-
-- Linux (Arch Linux x86_64) - Tested
-- Windows - Should work when run from source
-- macOS - Should work when run from source
-
-### GitHub Release
-
-Download the latest release from the Releases page.
-
 ## Workflow
 
 1. Create an account
