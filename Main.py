@@ -311,7 +311,7 @@ while True:
         print("--------------------------------")
         print("--------------------------------")
         print("1. Go Back")
-        choice = input("> ") #pressing down button on elevator when u wanna go up 
+        choice = input("> ") 
     
 
     if menu_choice == 5:
@@ -332,4 +332,4 @@ while True:
         print("Total Shares:", total_shares)
         print("--------------------------------")
         print("1. Go Back")
-        choice = input("> ")  # elevator again 
+        choice = input("> ") 
