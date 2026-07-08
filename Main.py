@@ -2,6 +2,24 @@ import sqlite3
 import hashlib
 import random
 import time
+import os
+from pathlib import Path
+from dotenv import load_dotenv
+
+ENV_FILE = Path(".env")
+
+# First-time setup
+if not ENV_FILE.exists():
+    print("--------------------------------")
+    print("One time setup")
+    print("--------------------------------")
+    api_key = input("Enter your Finnhub API Key: ").strip()
+    with open(ENV_FILE, "w") as f:
+        f.write(f"FINNHUB_API_KEY={api_key}\n")
+    print("API key saved!\n")
+load_dotenv()
+API_KEY = os.getenv("FINNHUB_API_KEY")
+
 # Connect
 conn = sqlite3.connect("stock_sim.db")
 cur = conn.cursor()

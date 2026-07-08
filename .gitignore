@@ -1,5 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+
 build/
 dist/
-__pycache__/
 *.spec
+
 *.zip
+.DS_Store
