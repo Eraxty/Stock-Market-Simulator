@@ -5,20 +5,53 @@ import time
 import os
 from pathlib import Path
 from dotenv import load_dotenv
+import requests
 
-ENV_FILE = Path(".env")
+def get_api_key():
+    load_dotenv()
+    api_key = os.getenv("FINNHUB_API_KEY")
 
-# First-time setup
-if not ENV_FILE.exists():
-    print("--------------------------------")
-    print("One time setup")
-    print("--------------------------------")
-    api_key = input("Enter your Finnhub API Key: ").strip()
-    with open(ENV_FILE, "w") as f:
-        f.write(f"FINNHUB_API_KEY={api_key}\n")
-    print("API key saved!\n")
-load_dotenv()
-API_KEY = os.getenv("FINNHUB_API_KEY")
+    while True:
+        if api_key:
+            try: #check if api key is valid
+                response = requests.get(
+                    "https://finnhub.io/api/v1/quote",
+                    params={
+                        "symbol": "AAPL",
+                        "token": api_key
+                    },
+                    timeout=5
+                )
+                data = response.json()
+                if "error" not in data:
+                    return api_key
+                print("API key is invalid.")
+            except requests.RequestException:
+                print("Couldn't connect to Finnhub.")
+                exit()
+        api_key = input("Enter your Finnhub API Key: ").strip()
+        try:
+            response = requests.get(
+                "https://finnhub.io/api/v1/quote",
+                params={
+                    "symbol": "AAPL",
+                    "token": api_key
+                },
+                timeout=5
+            )
+            data = response.json()
+            if "error" in data:
+                print("Invalid API key.\n")
+                api_key = None
+                continue
+            with open(".env", "w") as f:
+                f.write(f"FINNHUB_API_KEY={api_key}\n")
+            load_dotenv(override=True)
+            return api_key
+        except requests.RequestException:
+            print("couldnt connect to finnhub")
+            exit()
+API_KEY = get_api_key()
 
 # Connect
 conn = sqlite3.connect("stock_sim.db")
