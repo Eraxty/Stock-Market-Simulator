@@ -6,6 +6,11 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 import requests
+from pyfiglet import Figlet
+
+f = Figlet(font='slant')
+print(f.renderText('Stock Market Simulator'))
+
 
 def get_api_key():
     load_dotenv()
