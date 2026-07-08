@@ -1,9 +1,6 @@
 import sqlite3
 import hashlib
-import random
-import time
 import os
-from pathlib import Path
 from dotenv import load_dotenv
 import requests
 from pyfiglet import Figlet
@@ -62,6 +59,19 @@ API_KEY = get_api_key()
 # Connect
 conn = sqlite3.connect("stock_sim.db")
 cur = conn.cursor()
+
+def update_prices():
+    cur.execute("SELECT id, symbol FROM stocks")
+    stocks = cur.fetchall()
+    for stock_id, symbol in stocks:
+        try:
+            price = get_price(symbol)
+            cur.execute("UPDATE stocks SET price = ? WHERE id = ?", (price, stock_id))
+        except:
+            continue
+    conn.commit()
+
+update_prices()
 
 logged_in = False
 while not logged_in:
@@ -150,18 +160,15 @@ def get_balance(): #very useful function
 
 def get_net_worth():
     cash = get_balance()
-    cur.execute("SELECT symbol, shares FROM portfolio WHERE username = ?", (user[1],))
+    cur.execute(
+        "SELECT symbol, shares FROM portfolio WHERE username = ?",
+        (user[1],)
+    )
     holdings = cur.fetchall()
-
     holdings_value = 0
     for symbol, shares in holdings:
-        cur.execute("SELECT price FROM stocks WHERE symbol = ?", (symbol,))
-        stock = cur.fetchone()
-        if stock is not None:
-            holdings_value += get_price(symbol) * shares
-
+        holdings_value += get_price(symbol) * shares
     return cash + holdings_value
-
 
 def show_market():
     cur.execute("SELECT id, symbol FROM stocks")
@@ -207,20 +214,23 @@ while True:
     if menu_choice == 2:
         show_market()
         stock_id = int(input("Select Stock ID: "))
-        cur.execute("SELECT * FROM stocks WHERE id = ?",(stock_id,))
+        cur.execute("SELECT * FROM stocks WHERE id = ?", (stock_id,))
         stock = cur.fetchone()
-        if stock is None: #stop user bcs stock doesnt exist
+
+        if stock is None:
             print("Invalid Stock ID")
             continue
+
+        symbol = stock[1]
         shares = int(input("Enter Shares: "))
         if shares <= 0:
             print("Invalid share amount")
             continue
-        price = get_price(stock[1])
+        price = get_price(symbol)
         cost = price * shares
         balance = get_balance() - cost
         print("--------------------------------")
-        print("Stock:", stock[1])
+        print("Stock:", symbol)
         print("Price: $", price)
         print("Shares:", shares)
         print("Total Cost: $", round(cost, 2))
@@ -243,7 +253,7 @@ while True:
         cur.execute("UPDATE users SET balance = ? WHERE username = ?",(balance, user[1]))
 
         #create holding to check if user has stock or no 
-        cur.execute("SELECT * FROM portfolio WHERE username = ? AND symbol = ?",(user[1], stock[1]))
+        cur.execute("SELECT * FROM portfolio WHERE username = ? AND symbol = ?",(user[1], symbol))
         holding = cur.fetchone()
         
 
@@ -256,7 +266,7 @@ while True:
             cur.execute("UPDATE portfolio SET shares = ? WHERE id = ?",(new_shares, holding[0]))
             
         else:
-            cur.execute("INSERT INTO portfolio(symbol, shares, username)VALUES (?, ?, ?)",(stock[1], shares, user[1]))
+            cur.execute("INSERT INTO portfolio(symbol, shares, username)VALUES (?, ?, ?)",(symbol, shares, user[1]))
         conn.commit()
 
 
@@ -291,11 +301,9 @@ while True:
         if shares > hold[2]: # prevent selling more than owned
             print("Not enough shares")
             continue
-
-        cur.execute("SELECT * FROM stocks WHERE symbol = ?",(hold[1],))
-        stock = cur.fetchone()
-
-        price = get_price(stock[1])
+        
+        symbol = hold[1]
+        price = get_price(symbol)
         sale_value = price * shares
         
         #menu for sale
@@ -327,7 +335,9 @@ while True:
         else: #update remaining shares
             cur.execute("UPDATE portfolio SET shares = ? WHERE id = ?",(remaining, hold[0]))
 
-        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)",(user[0], stock[0], "SELL", shares, price))
+        cur.execute("SELECT id FROM stocks WHERE symbol = ?", (symbol,))
+        stock_id = cur.fetchone()[0]
+        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)",(user[0], stock_id, "SELL", shares, price))
         conn.commit()
 
         print("Successful") #print successfull
