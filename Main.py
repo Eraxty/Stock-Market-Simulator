@@ -91,6 +91,20 @@ def get_balance(): #very useful function
     balance = cur.fetchone()
     return balance[0]
 
+def get_net_worth():
+    cash = get_balance()
+    cur.execute("SELECT symbol, shares FROM portfolio WHERE username = ?", (user[1],))
+    holdings = cur.fetchall()
+
+    holdings_value = 0
+    for symbol, shares in holdings:
+        cur.execute("SELECT price FROM stocks WHERE symbol = ?", (symbol,))
+        stock = cur.fetchone()
+        if stock is not None:
+            holdings_value += stock[0] * shares
+
+    return cash + holdings_value
+
 
 def show_market(): #shows the stocks
     cur.execute("SELECT * FROM stocks")
@@ -185,6 +199,9 @@ while True:
             print("Invalid Stock ID")
             continue
         shares = int(input("Enter Shares: "))
+        if shares <= 0:
+            print("Invalid share amount")
+            continue
         cost = stock[2] * shares
         balance = get_balance() - cost
         print("--------------------------------")
@@ -252,6 +269,9 @@ while True:
         hold = holdings[choice - 1]
 
         shares = int(input("Number of shares: "))
+        if shares <= 0:
+            print("Invalid share amount")
+            continue
 
         if shares > hold[2]: # prevent selling more than owned
             print("Not enough shares")
@@ -321,6 +341,7 @@ while True:
 
         print("Username:", user[1])
         print("Balance: $", round(get_balance(), 2))
+        print("Net Worth: $", round(get_net_worth(), 2))
 
         cur.execute("SELECT SUM(shares) FROM portfolio WHERE username = ?",(user[1],))
 
