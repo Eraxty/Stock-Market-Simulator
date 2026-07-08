@@ -7,6 +7,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 import requests
 from pyfiglet import Figlet
+from stock_api import *
 
 f = Figlet(font='slant')
 print(f.renderText('Stock Market Simulator'))
@@ -157,71 +158,29 @@ def get_net_worth():
         cur.execute("SELECT price FROM stocks WHERE symbol = ?", (symbol,))
         stock = cur.fetchone()
         if stock is not None:
-            holdings_value += stock[0] * shares
+            holdings_value += get_price(symbol) * shares
 
     return cash + holdings_value
 
 
-def show_market(): #shows the stocks
-    cur.execute("SELECT * FROM stocks")
+def show_market():
+    cur.execute("SELECT id, symbol FROM stocks")
     stocks = cur.fetchall()
 
     print("--------------------------------")
-    print("SYMBOL\tPRICE")
-    print("--------------------------------")
- 
-    for i in stocks:
-        print(f"{i[0]:<3} {i[1]:<8} ${i[2]:.2f}") #actuall formating
+    print("ID  SYMBOL   PRICE")
     print("--------------------------------")
 
-#bunch of functions which give random value so we can control market
-def crash():
-    return random.uniform(-20, -10)
+    for stock_id, symbol in stocks:
+        try:
+            price = get_price(symbol)
+            print(f"{stock_id:<3} {symbol:<8} ${price:.2f}")
+        except:
+            print(f"{stock_id:<3} {symbol:<8} N/A")
+    print("--------------------------------")
 
-def boom():
-    return random.uniform(10, 20)
-
-def bear():
-    return random.uniform(-8, -3)
-
-def bull():
-    return random.uniform(3, 8)
-
-def stable():
-    return random.uniform(-1, 1)
-
-def little_up():
-    return random.uniform(1, 3)
-
-def little_down():
-    return random.uniform(-3, -1)
-
-def update_market(): #update market aka change prices of stock
-    cur.execute("SELECT * FROM stocks")
-    stocks = cur.fetchall()
-    event = random.choices([crash, boom, bear, bull, stable, little_up, little_down], #choses 1 of random to apply 
-    weights=[2, 2, 10, 10, 50, 13, 13])[0] #functions have weight some are more often than others 
-
-    for stock in stocks:
-        change = event()
-        new_price = stock[2] * (1 + change / 100)
-
-        if new_price < 1:
-            new_price = 1
-
-        cur.execute("UPDATE stocks SET price = ? WHERE id = ?",(round(new_price, 2), stock[0]))
-    conn.commit()
-
-last_update = time.time()
 
 while True:
-    current_time = time.time()
-
-    if current_time - last_update >= 30: #update market every 30 secs
-        update_market()
-        print("Market Updated!")
-        last_update = current_time
-
     print("--------------------------------") #Main Menu 
     print("Stock Market Simulator")
     print("Balance: $", round(get_balance()))
@@ -234,7 +193,6 @@ while True:
     print("--------------------------------")
 
     menu_choice = int(input("> "))
-
 
     if menu_choice == 1: #shows market
         while True:
@@ -258,11 +216,12 @@ while True:
         if shares <= 0:
             print("Invalid share amount")
             continue
-        cost = stock[2] * shares
+        price = get_price(stock[1])
+        cost = price * shares
         balance = get_balance() - cost
         print("--------------------------------")
         print("Stock:", stock[1])
-        print("Price: $", stock[2])
+        print("Price: $", price)
         print("Shares:", shares)
         print("Total Cost: $", round(cost, 2))
         print("Balance After $",balance)
@@ -289,7 +248,7 @@ while True:
         
 
         #record transaction history
-        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)", (user[0], stock[0], "BUY", shares, stock[2]))
+        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)", (user[0], stock[0], "BUY", shares, price))
         
 
         if holding != None:
@@ -336,12 +295,13 @@ while True:
         cur.execute("SELECT * FROM stocks WHERE symbol = ?",(hold[1],))
         stock = cur.fetchone()
 
-        sale_value = stock[2] * shares
+        price = get_price(stock[1])
+        sale_value = price * shares
         
         #menu for sale
         print("--------------------------------") 
         print("Stock:", hold[1])
-        print("Price: $", stock[2])
+        print("Price: $", price)
         print("Shares:", shares)
         print("You Receive: $", round(sale_value, 2))
         print("Balance After: $", round(get_balance() + sale_value, 2))
@@ -367,7 +327,7 @@ while True:
         else: #update remaining shares
             cur.execute("UPDATE portfolio SET shares = ? WHERE id = ?",(remaining, hold[0]))
 
-        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)",(user[0], stock[0], "SELL", shares, stock[2]))
+        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)",(user[0], stock[0], "SELL", shares, price))
         conn.commit()
 
         print("Successful") #print successfull
