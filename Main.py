@@ -59,6 +59,7 @@ API_KEY = get_api_key()
 # Connect
 conn = sqlite3.connect("stock_sim.db")
 cur = conn.cursor()
+cur.execute("PRAGMA foreign_keys = ON")
 
 def update_prices():
     cur.execute("SELECT id, symbol FROM stocks")
@@ -146,7 +147,7 @@ while not logged_in:
         password = input("Choose password: ")
 
         pass_hash = hashlib.sha256(password.encode()).hexdigest() #hash the pass
-        balance = 100000 #initial balancce given
+        balance = 100000 #initial balance given
         cur.execute("""INSERT INTO users (username, balance, password) VALUES (?, ?, ?)""",(username, balance ,pass_hash))
         conn.commit()
         print("--------------------------------")
@@ -368,7 +369,12 @@ while True:
 
 
     if menu_choice == 4:
-        cur.execute("SELECT * FROM transactions WHERE user_id = ?",(user[0],))
+        cur.execute("""
+            SELECT t.type, s.symbol, t.quantity, t.price, t.timestamp
+            FROM transactions t
+            JOIN stocks s ON t.stock_id = s.id
+            WHERE t.user_id = ?
+        """,(user[0],))
         transactions = cur.fetchall()
 
         print("--------------------------------")
@@ -376,8 +382,12 @@ while True:
         print("--------------------------------")
 
         for t in transactions: #display transactions
-            total = t[4] * t[5]
-            print(t[3],"Stock ID:", t[2],"Shares:", t[4],"Price:$", round(t[5], 2), "Total:$", round(total, 2))
+            total = t[2] * t[3]
+            print(t[0], " ", t[1], sep="")
+            print("Shares:", t[2])
+            print("Price: $", round(t[3], 2), sep="")
+            print("Total: $", round(total, 2), sep="")
+            print("Time:", t[4])
         print("--------------------------------")
         print("--------------------------------")
         print("1. Go Back")
