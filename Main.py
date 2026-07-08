@@ -67,7 +67,7 @@ def update_prices():
         try:
             price = get_price(symbol)
             cur.execute("UPDATE stocks SET price = ? WHERE id = ?", (price, stock_id))
-        except:
+        except Exception:
             continue
     conn.commit()
 
@@ -182,7 +182,7 @@ def show_market():
         try:
             price = get_price(symbol)
             print(f"{stock_id:<3} {symbol:<8} ${price:.2f}")
-        except:
+        except Exception:
             print(f"{stock_id:<3} {symbol:<8} N/A")
     print("--------------------------------")
 
@@ -199,13 +199,21 @@ while True:
     print("5.Account info")
     print("--------------------------------")
 
-    menu_choice = int(input("> "))
+    try:
+        menu_choice = int(input("> "))
+    except ValueError:
+        print("Invalid input")
+        continue
 
     if menu_choice == 1: #shows market
         while True:
             show_market()
             print("1. Go Back")
-            choice = int(input("> "))
+            try:
+                choice = int(input("> "))
+            except ValueError:
+                print("Invalid input")
+                continue
 
             if choice == 1:
                 break
@@ -213,7 +221,11 @@ while True:
 
     if menu_choice == 2:
         show_market()
-        stock_id = int(input("Select Stock ID: "))
+        try:
+            stock_id = int(input("Select Stock ID: "))
+        except ValueError:
+            print("Invalid input")
+            continue
         cur.execute("SELECT * FROM stocks WHERE id = ?", (stock_id,))
         stock = cur.fetchone()
 
@@ -222,7 +234,11 @@ while True:
             continue
 
         symbol = stock[1]
-        shares = int(input("Enter Shares: "))
+        try:
+            shares = int(input("Enter Shares: "))
+        except ValueError:
+            print("Invalid input")
+            continue
         if shares <= 0:
             print("Invalid share amount")
             continue
@@ -290,10 +306,18 @@ while True:
 
         print("--------------------------------")
 
-        choice = int(input("Sell> "))
+        try:
+            choice = int(input("Sell> "))
+        except ValueError:
+            print("Invalid input")
+            continue
         hold = holdings[choice - 1]
 
-        shares = int(input("Number of shares: "))
+        try:
+            shares = int(input("Number of shares: "))
+        except ValueError:
+            print("Invalid input")
+            continue
         if shares <= 0:
             print("Invalid share amount")
             continue
@@ -308,7 +332,7 @@ while True:
         
         #menu for sale
         print("--------------------------------") 
-        print("Stock:", hold[1])
+        print("Stock:", symbol)
         print("Price: $", price)
         print("Shares:", shares)
         print("You Receive: $", round(sale_value, 2))
@@ -357,7 +381,11 @@ while True:
         print("--------------------------------")
         print("--------------------------------")
         print("1. Go Back")
-        choice = input("> ") 
+        try:
+            choice = int(input("> "))
+        except ValueError:
+            print("Invalid input")
+            continue
     
 
     if menu_choice == 5:
@@ -379,4 +407,8 @@ while True:
         print("Total Shares:", total_shares)
         print("--------------------------------")
         print("1. Go Back")
-        choice = input("> ") 
+        try:
+            choice = int(input("> "))
+        except ValueError:
+            print("Invalid input")
+            continue
