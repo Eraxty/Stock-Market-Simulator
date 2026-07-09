@@ -205,7 +205,11 @@ try:
         try:
             menu_choice = int(input("> "))
         except ValueError:
-            print("Invalid input")
+            print("Invalid option")
+            continue
+
+        if menu_choice not in (1, 2, 3, 4, 5):
+            print("Invalid option")
             continue
 
         if menu_choice == 1: #shows market
@@ -247,13 +251,17 @@ try:
                 continue
             price = get_price(symbol)
             cost = price * shares
-            balance = get_balance() - cost
+            balance = get_balance()
+            if cost > balance:
+                print("Not enough balance")
+                continue
+            new_balance = balance - cost
             print(LINE)
             print("Stock:", symbol)
-            print("Price: $", price)
+            print(f"Price: ${price:.2f}")
             print("Shares:", shares)
-            print("Total Cost: $", round(cost, 2))
-            print("Balance After $",balance)
+            print(f"Total Cost: ${cost:.2f}")
+            print(f"Balance After: ${new_balance:.2f}")
             print(LINE)
             print("1. Confirm")
             print("2. Cancel")
@@ -264,12 +272,8 @@ try:
             if confirm != "1":
                 continue
 
-            if cost > get_balance():
-                print("Not enough balance")
-                continue
-
             #subtract purchase cost from users balance
-            cur.execute("UPDATE users SET balance = ? WHERE username = ?",(balance, user[1]))
+            cur.execute("UPDATE users SET balance = ? WHERE username = ?",(new_balance, user[1]))
 
             #create holding to check if user has stock or no 
             cur.execute("SELECT * FROM portfolio WHERE username = ? AND symbol = ?",(user[1], symbol))
@@ -312,7 +316,10 @@ try:
             try:
                 choice = int(input("Sell> "))
             except ValueError:
-                print("Invalid input")
+                print("Invalid option")
+                continue
+            if choice < 1 or choice > len(holdings):
+                print("Invalid choice")
                 continue
             hold = holdings[choice - 1]
 
@@ -336,10 +343,10 @@ try:
             #menu for sale
             print(LINE) 
             print("Stock:", symbol)
-            print("Price: $", price)
+            print(f"Price: ${price:.2f}")
             print("Shares:", shares)
-            print("You Receive: $", round(sale_value, 2))
-            print("Balance After: $", round(get_balance() + sale_value, 2))
+            print(f"You Receive: ${sale_value:.2f}")
+            print(f"Balance After: ${get_balance() + sale_value:.2f}")
             print(LINE)
             print("1. Confirm")
             print("2. Cancel")
@@ -383,14 +390,14 @@ try:
             print("TRANSACTION HISTORY")
             print(LINE)
 
-            for t in transactions: #display transactions
+            for t in transactions:
                 total = t[2] * t[3]
                 print(t[0], " ", t[1], sep="")
                 print("Shares:", t[2])
-                print("Price: $", round(t[3], 2), sep="")
-                print("Total: $", round(total, 2), sep="")
+                print(f"Price: ${t[3]:.2f}")
+                print(f"Total: ${total:.2f}")
                 print("Time:", t[4])
-            print(LINE)
+                print(LINE)
             print(LINE)
             print("1. Go Back")
             try:
@@ -406,8 +413,8 @@ try:
             print(LINE)
 
             print("Username:", user[1])
-            print("Balance: $", round(get_balance(), 2))
-            print("Net Worth: $", round(get_net_worth(), 2))
+            print(f"Balance: ${get_balance():.2f}")
+            print(f"Net Worth: ${get_net_worth():.2f}")
 
             cur.execute("SELECT SUM(shares) FROM portfolio WHERE username = ?",(user[1],))
 
