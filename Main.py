@@ -189,239 +189,242 @@ def show_market():
             print(f"{stock_id:<3} {symbol:<8} N/A")
     print(LINE)
 
+try:
+    while True:
+        print(LINE) #Main Menu 
+        print("Stock Market Simulator")
+        print("Balance: $", round(get_balance()))
+        print(LINE)
+        print("1.View Market")
+        print("2.Buy Stocks")
+        print("3.Sell Stocks")
+        print("4.Transaction history")
+        print("5.Account info")
+        print(LINE)
 
-while True:
-    print(LINE) #Main Menu 
-    print("Stock Market Simulator")
-    print("Balance: $", round(get_balance()))
-    print(LINE)
-    print("1.View Market")
-    print("2.Buy Stocks")
-    print("3.Sell Stocks")
-    print("4.Transaction history")
-    print("5.Account info")
-    print(LINE)
+        try:
+            menu_choice = int(input("> "))
+        except ValueError:
+            print("Invalid input")
+            continue
 
-    try:
-        menu_choice = int(input("> "))
-    except ValueError:
-        print("Invalid input")
-        continue
+        if menu_choice == 1: #shows market
+            while True:
+                show_market()
+                print("1. Go Back")
+                try:
+                    choice = int(input("> "))
+                except ValueError:
+                    print("Invalid input")
+                    continue
 
-    if menu_choice == 1: #shows market
-        while True:
+                if choice == 1:
+                    break
+        
+
+        if menu_choice == 2:
             show_market()
+            try:
+                stock_id = int(input("Select Stock ID: "))
+            except ValueError:
+                print("Invalid input")
+                continue
+            cur.execute("SELECT * FROM stocks WHERE id = ?", (stock_id,))
+            stock = cur.fetchone()
+
+            if stock is None:
+                print("Invalid Stock ID")
+                continue
+
+            symbol = stock[1]
+            try:
+                shares = int(input("Enter Shares: "))
+            except ValueError:
+                print("Invalid input")
+                continue
+            if shares <= 0:
+                print("Invalid share amount")
+                continue
+            price = get_price(symbol)
+            cost = price * shares
+            balance = get_balance() - cost
+            print(LINE)
+            print("Stock:", symbol)
+            print("Price: $", price)
+            print("Shares:", shares)
+            print("Total Cost: $", round(cost, 2))
+            print("Balance After $",balance)
+            print(LINE)
+            print("1. Confirm")
+            print("2. Cancel")
+            print(LINE)
+
+            confirm = input("> ")
+
+            if confirm != "1":
+                continue
+
+            if cost > get_balance():
+                print("Not enough balance")
+                continue
+
+            #subtract purchase cost from users balance
+            cur.execute("UPDATE users SET balance = ? WHERE username = ?",(balance, user[1]))
+
+            #create holding to check if user has stock or no 
+            cur.execute("SELECT * FROM portfolio WHERE username = ? AND symbol = ?",(user[1], symbol))
+            holding = cur.fetchone()
+            
+
+            #record transaction history
+            cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)", (user[0], stock[0], "BUY", shares, price))
+            
+
+            if holding != None:
+                new_shares = holding[2] + shares
+                cur.execute("UPDATE portfolio SET shares = ? WHERE id = ?",(new_shares, holding[0]))
+                
+            else:
+                cur.execute("INSERT INTO portfolio(symbol, shares, username)VALUES (?, ?, ?)",(symbol, shares, user[1]))
+            conn.commit()
+
+
+        if menu_choice == 3: #sell
+            cur.execute("SELECT * FROM portfolio WHERE username = ?",(user[1],))
+
+            holdings = cur.fetchall()
+
+            if len(holdings) == 0:
+                print("No holdings found")
+                continue
+
+            print(LINE)
+            print("YOUR HOLDINGS")
+            print(LINE)
+
+            n = 1
+            for h in holdings:
+                print(f"{n:<3} {h[1]:<8} {h[2]}")
+                n = n + 1
+
+            print(LINE)
+
+            try:
+                choice = int(input("Sell> "))
+            except ValueError:
+                print("Invalid input")
+                continue
+            hold = holdings[choice - 1]
+
+            try:
+                shares = int(input("Number of shares: "))
+            except ValueError:
+                print("Invalid input")
+                continue
+            if shares <= 0:
+                print("Invalid share amount")
+                continue
+
+            if shares > hold[2]: # prevent selling more than owned
+                print("Not enough shares")
+                continue
+            
+            symbol = hold[1]
+            price = get_price(symbol)
+            sale_value = price * shares
+            
+            #menu for sale
+            print(LINE) 
+            print("Stock:", symbol)
+            print("Price: $", price)
+            print("Shares:", shares)
+            print("You Receive: $", round(sale_value, 2))
+            print("Balance After: $", round(get_balance() + sale_value, 2))
+            print(LINE)
+            print("1. Confirm")
+            print("2. Cancel")
+            print(LINE)
+
+            confirm = input("> ")
+
+            if confirm != "1":
+                continue
+
+            new_balance = get_balance() + sale_value #new balance
+
+            cur.execute("UPDATE users SET balance = ? WHERE username = ?",(new_balance, user[1]))
+
+            remaining = hold[2] - shares # calculate remaining shares after sale
+
+            if remaining == 0:
+                cur.execute("DELETE FROM portfolio WHERE id = ?",(hold[0],))
+
+            else: #update remaining shares
+                cur.execute("UPDATE portfolio SET shares = ? WHERE id = ?",(remaining, hold[0]))
+
+            cur.execute("SELECT id FROM stocks WHERE symbol = ?", (symbol,))
+            stock_id = cur.fetchone()[0]
+            cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)",(user[0], stock_id, "SELL", shares, price))
+            conn.commit()
+
+            print("Successful") #print successfull
+
+
+        if menu_choice == 4:
+            cur.execute("""
+                SELECT t.type, s.symbol, t.quantity, t.price, t.timestamp
+                FROM transactions t
+                JOIN stocks s ON t.stock_id = s.id
+                WHERE t.user_id = ?
+            """,(user[0],))
+            transactions = cur.fetchall()
+
+            print(LINE)
+            print("TRANSACTION HISTORY")
+            print(LINE)
+
+            for t in transactions: #display transactions
+                total = t[2] * t[3]
+                print(t[0], " ", t[1], sep="")
+                print("Shares:", t[2])
+                print("Price: $", round(t[3], 2), sep="")
+                print("Total: $", round(total, 2), sep="")
+                print("Time:", t[4])
+            print(LINE)
+            print(LINE)
             print("1. Go Back")
             try:
                 choice = int(input("> "))
             except ValueError:
                 print("Invalid input")
                 continue
-
-            if choice == 1:
-                break
-    
-
-    if menu_choice == 2:
-        show_market()
-        try:
-            stock_id = int(input("Select Stock ID: "))
-        except ValueError:
-            print("Invalid input")
-            continue
-        cur.execute("SELECT * FROM stocks WHERE id = ?", (stock_id,))
-        stock = cur.fetchone()
-
-        if stock is None:
-            print("Invalid Stock ID")
-            continue
-
-        symbol = stock[1]
-        try:
-            shares = int(input("Enter Shares: "))
-        except ValueError:
-            print("Invalid input")
-            continue
-        if shares <= 0:
-            print("Invalid share amount")
-            continue
-        price = get_price(symbol)
-        cost = price * shares
-        balance = get_balance() - cost
-        print(LINE)
-        print("Stock:", symbol)
-        print("Price: $", price)
-        print("Shares:", shares)
-        print("Total Cost: $", round(cost, 2))
-        print("Balance After $",balance)
-        print(LINE)
-        print("1. Confirm")
-        print("2. Cancel")
-        print(LINE)
-
-        confirm = input("> ")
-
-        if confirm != "1":
-            continue
-
-        if cost > get_balance():
-            print("Not enough balance")
-            continue
-
-        #subtract purchase cost from users balance
-        cur.execute("UPDATE users SET balance = ? WHERE username = ?",(balance, user[1]))
-
-        #create holding to check if user has stock or no 
-        cur.execute("SELECT * FROM portfolio WHERE username = ? AND symbol = ?",(user[1], symbol))
-        holding = cur.fetchone()
         
 
-        #record transaction history
-        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)", (user[0], stock[0], "BUY", shares, price))
-        
+        if menu_choice == 5:
+            print(LINE)
+            print("ACCOUNT INFO")
+            print(LINE)
 
-        if holding != None:
-            new_shares = holding[2] + shares
-            cur.execute("UPDATE portfolio SET shares = ? WHERE id = ?",(new_shares, holding[0]))
-            
-        else:
-            cur.execute("INSERT INTO portfolio(symbol, shares, username)VALUES (?, ?, ?)",(symbol, shares, user[1]))
-        conn.commit()
+            print("Username:", user[1])
+            print("Balance: $", round(get_balance(), 2))
+            print("Net Worth: $", round(get_net_worth(), 2))
 
+            cur.execute("SELECT SUM(shares) FROM portfolio WHERE username = ?",(user[1],))
 
-    if menu_choice == 3: #sell
-        cur.execute("SELECT * FROM portfolio WHERE username = ?",(user[1],))
+            total_shares = cur.fetchone()[0]
 
-        holdings = cur.fetchall()
+            if total_shares is None:
+                total_shares = 0
 
-        if len(holdings) == 0:
-            print("No holdings found")
-            continue
-
-        print(LINE)
-        print("YOUR HOLDINGS")
-        print(LINE)
-
-        n = 1
-        for h in holdings:
-            print(f"{n:<3} {h[1]:<8} {h[2]}")
-            n = n + 1
-
-        print(LINE)
-
-        try:
-            choice = int(input("Sell> "))
-        except ValueError:
-            print("Invalid input")
-            continue
-        hold = holdings[choice - 1]
-
-        try:
-            shares = int(input("Number of shares: "))
-        except ValueError:
-            print("Invalid input")
-            continue
-        if shares <= 0:
-            print("Invalid share amount")
-            continue
-
-        if shares > hold[2]: # prevent selling more than owned
-            print("Not enough shares")
-            continue
-        
-        symbol = hold[1]
-        price = get_price(symbol)
-        sale_value = price * shares
-        
-        #menu for sale
-        print(LINE) 
-        print("Stock:", symbol)
-        print("Price: $", price)
-        print("Shares:", shares)
-        print("You Receive: $", round(sale_value, 2))
-        print("Balance After: $", round(get_balance() + sale_value, 2))
-        print(LINE)
-        print("1. Confirm")
-        print("2. Cancel")
-        print(LINE)
-
-        confirm = input("> ")
-
-        if confirm != "1":
-            continue
-
-        new_balance = get_balance() + sale_value #new balance
-
-        cur.execute("UPDATE users SET balance = ? WHERE username = ?",(new_balance, user[1]))
-
-        remaining = hold[2] - shares # calculate remaining shares after sale
-
-        if remaining == 0:
-            cur.execute("DELETE FROM portfolio WHERE id = ?",(hold[0],))
-
-        else: #update remaining shares
-            cur.execute("UPDATE portfolio SET shares = ? WHERE id = ?",(remaining, hold[0]))
-
-        cur.execute("SELECT id FROM stocks WHERE symbol = ?", (symbol,))
-        stock_id = cur.fetchone()[0]
-        cur.execute("INSERT INTO transactions(user_id, stock_id, type, quantity, price) VALUES (?, ?, ?, ?, ?)",(user[0], stock_id, "SELL", shares, price))
-        conn.commit()
-
-        print("Successful") #print successfull
-
-
-    if menu_choice == 4:
-        cur.execute("""
-            SELECT t.type, s.symbol, t.quantity, t.price, t.timestamp
-            FROM transactions t
-            JOIN stocks s ON t.stock_id = s.id
-            WHERE t.user_id = ?
-        """,(user[0],))
-        transactions = cur.fetchall()
-
-        print(LINE)
-        print("TRANSACTION HISTORY")
-        print(LINE)
-
-        for t in transactions: #display transactions
-            total = t[2] * t[3]
-            print(t[0], " ", t[1], sep="")
-            print("Shares:", t[2])
-            print("Price: $", round(t[3], 2), sep="")
-            print("Total: $", round(total, 2), sep="")
-            print("Time:", t[4])
-        print(LINE)
-        print(LINE)
-        print("1. Go Back")
-        try:
-            choice = int(input("> "))
-        except ValueError:
-            print("Invalid input")
-            continue
-    
-
-    if menu_choice == 5:
-        print(LINE)
-        print("ACCOUNT INFO")
-        print(LINE)
-
-        print("Username:", user[1])
-        print("Balance: $", round(get_balance(), 2))
-        print("Net Worth: $", round(get_net_worth(), 2))
-
-        cur.execute("SELECT SUM(shares) FROM portfolio WHERE username = ?",(user[1],))
-
-        total_shares = cur.fetchone()[0]
-
-        if total_shares is None:
-            total_shares = 0
-
-        print("Total Shares:", total_shares)
-        print(LINE)
-        print("1. Go Back")
-        try:
-            choice = int(input("> "))
-        except ValueError:
-            print("Invalid input")
-            continue
-conn.close()
+            print("Total Shares:", total_shares)
+            print(LINE)
+            print("1. Go Back")
+            try:
+                choice = int(input("> "))
+            except ValueError:
+                print("Invalid input")
+                continue
+except KeyboardInterrupt:
+    print("\nbyeee.")
+finally:
+    conn.close()
