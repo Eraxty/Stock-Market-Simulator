@@ -18,4 +18,5 @@ def plot_history(symbol, period="1mo"):
     plt.xlabel("Trading Days")
     plt.ylabel("Price ($)")
     plt.plot(prices)
+    plt.plotsize(100, 30)
     plt.show()

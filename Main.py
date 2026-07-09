@@ -6,6 +6,7 @@ import requests
 from pyfiglet import Figlet
 from stock_api import *
 from graph import plot_history
+from colors import *
 
 f = Figlet(font='slant')
 print(f.renderText('Stock Market Simulator'))
@@ -31,7 +32,7 @@ def get_api_key():
                 data = response.json()
                 if "error" not in data:
                     return api_key
-                print("API key is invalid.")
+                print(f"{YELLOW}API key is invalid.{RESET}")
             except requests.RequestException:
                 print("Couldn't connect to Finnhub.")
                 exit()
@@ -96,7 +97,7 @@ while not logged_in:
 
             if user is None: #username not found
                 print(LINE)
-                print("User not found")
+                print(f"{RED}User not found{RESET}")
                 print(LINE)
                 print("1. Try Again")
                 print("2. Back")
@@ -115,12 +116,12 @@ while not logged_in:
                 pass_hash = hashlib.sha256(password.encode()).hexdigest() #hash the pass bcs storing plain text is bad
                 if pass_hash == user[3]: #compare the hashes 
                     print(LINE)
-                    print("Login Successful")
+                    print(f"{GREEN}Login Successful{RESET}")
                     print(LINE)
                     logged_in = True
                     break
                 print(LINE)
-                print("Wrong Password")
+                print(f"{RED}Wrong Password{RESET}")
                 print(LINE)
                 print("1. Try Again")
                 print("2. Back")
@@ -143,7 +144,7 @@ while not logged_in:
 
         if cur.fetchone() != None: #check if user exist
             print(LINE)
-            print("Username already exists")
+            print(f"{RED}Username already exists{RESET}")
             print(LINE)
             continue
 
@@ -154,7 +155,7 @@ while not logged_in:
         cur.execute("""INSERT INTO users (username, balance, password) VALUES (?, ?, ?)""",(username, balance ,pass_hash))
         conn.commit()
         print(LINE)
-        print("Account Created!") 
+        print(f"{GREEN}Account Created!{RESET}") 
         print(LINE)
 
 def get_balance(): #very useful function
@@ -193,19 +194,26 @@ def show_market():
 def show_stock_details(symbol):
     info = get_market_info(symbol)
     print(LINE)
-    print("STOCK DETAILS")
+    print(f"{BOLD}{CYAN}STOCK DETAILS{RESET}")
     print(LINE)
     print("Company:", info["name"])
     print("Symbol:", info["symbol"])
     print(f"Current Price: ${info['price']:.2f}")
-    print(f"Daily Change: ${info['change']:.2f}")
-    print(f"Percent Change: {info['percent']:.2f}%")
+    if info["change"] >= 0:
+        color = GREEN
+    else:
+        color = RED
+
+    print(f"Daily Change: {color}${info['change']:.2f}{RESET}")
+    print(f"Percent Change: {color}{info['percent']:.2f}%{RESET}")
     print(f"Open: ${info['open']:.2f}")
     print(f"High: ${info['high']:.2f}")
     print(f"Low: ${info['low']:.2f}")
     print("Exchange:", info["exchange"])
     print("Industry:", info["industry"])
     print(f"Market Capitalization: ${info['market_cap']:.2f}M")
+    print(LINE)
+    plot_history(symbol)
     print(LINE)
     print("1. Buy")
     print("2. Back")
@@ -216,16 +224,16 @@ def buy_stock(stock):
     try:
         shares = int(input("Enter Shares: "))
     except ValueError:
-        print("Invalid input")
+        print(f"{RED}Invalid input{RESET}")
         return
     if shares <= 0:
-        print("Invalid share amount")
+        print(f"{YELLOW}Invalid share amount{RESET}")
         return
     price = get_price(symbol)
     cost = price * shares
     balance = get_balance()
     if cost > balance:
-        print("Not enough balance")
+        print(f"{RED}Not enough balance{RESET}")
         return
     new_balance = balance - cost
     print(LINE)
@@ -257,7 +265,7 @@ def buy_stock(stock):
     else:
         cur.execute("INSERT INTO portfolio(symbol, shares, username)VALUES (?, ?, ?)",(symbol, shares, user[1]))
     conn.commit()
-    print("Purchase Complete")
+    print(f"{GREEN}Successful{RESET}")
 
 try:
     selected_stock_id = None
@@ -278,11 +286,11 @@ try:
         try:
             menu_choice = int(input("> "))
         except ValueError:
-            print("Invalid option")
+            print(f"{RED}Invalid option{RESET}")
             continue
 
         if menu_choice not in (1, 2, 3, 4, 5, 6):
-            print("Invalid option")
+            print(f"{RED}Invalid option{RESET}")
             continue
 
         if menu_choice == 1: #shows market
@@ -292,7 +300,7 @@ try:
                 try:
                     choice = int(input("> "))
                 except ValueError:
-                    print("Invalid input")
+                    print(f"{RED}Invalid input{RESET}")
                     continue
 
                 if choice == 0:
@@ -300,14 +308,14 @@ try:
                 cur.execute("SELECT id, symbol FROM stocks WHERE id = ?", (choice,))
                 stock = cur.fetchone()
                 if stock is None:
-                    print("Invalid Stock ID")
+                    print(f"{RED}Invalid Stock ID{RESET}")
                     continue
                 while True:
                     show_stock_details(stock[1])
                     try:
                         detail_choice = int(input("> "))
                     except ValueError:
-                        print("Invalid option")
+                        print(f"{RED}Invalid option{RESET}")
                         continue
                     if detail_choice == 1:
                         selected_stock_id = stock[0]
@@ -318,7 +326,7 @@ try:
                         break
                     if detail_choice == 2:
                         break
-                    print("Invalid option")
+                    print(f"{RED}Invalid option{RESET}")
                 if selected_stock_id is not None:
                     break
         
@@ -332,20 +340,20 @@ try:
                 try:
                     stock_id = int(input("Select Stock ID: "))
                 except ValueError:
-                    print("Invalid input")
+                    print(f"{RED}Invalid input{RESET}")
                     continue
                 cur.execute("SELECT * FROM stocks WHERE id = ?", (stock_id,))
                 stock = cur.fetchone()
 
                 if stock is None:
-                    print("Invalid Stock ID")
+                    print(f"{RED}Invalid Stock ID{RESET}")
                     continue
 
                 symbol = stock[1]
             cur.execute("SELECT * FROM stocks WHERE id = ?", (stock_id,))
             stock = cur.fetchone()
             if stock is None:
-                print("Invalid Stock ID")
+                print(f"{RED}Invalid Stock ID{RESET}")
                 continue
             buy_stock(stock)
             selected_stock_id = None
@@ -358,11 +366,11 @@ try:
             holdings = cur.fetchall()
 
             if len(holdings) == 0:
-                print("No holdings found")
+                print(f"{YELLOW}No holdings found{RESET}")
                 continue
 
             print(LINE)
-            print("YOUR HOLDINGS")
+            print(f"{BOLD}{CYAN}YOUR HOLDINGS{RESET}")
             print(LINE)
 
             n = 1
@@ -375,7 +383,7 @@ try:
             try:
                 choice = int(input("Sell> "))
             except ValueError:
-                print("Invalid option")
+                print(f"{RED}Invalid option{RESET}")
                 continue
             if choice < 1 or choice > len(holdings):
                 print("Invalid choice")
@@ -385,14 +393,14 @@ try:
             try:
                 shares = int(input("Number of shares: "))
             except ValueError:
-                print("Invalid input")
+                print(f"{RED}Invalid input{RESET}")
                 continue
             if shares <= 0:
-                print("Invalid share amount")
+                print(f"{YELLOW}Invalid share amount{RESET}")
                 continue
 
             if shares > hold[2]: # prevent selling more than owned
-                print("Not enough shares")
+                print(f"{RED}Not enough shares{RESET}")
                 continue
             
             symbol = hold[1]
@@ -446,7 +454,7 @@ try:
             transactions = cur.fetchall()
 
             print(LINE)
-            print("TRANSACTION HISTORY")
+            print(f"{BOLD}{CYAN}TRANSACTION HISTORY{RESET}")
             print(LINE)
 
             for t in transactions:
@@ -462,17 +470,17 @@ try:
             try:
                 choice = int(input("> "))
             except ValueError:
-                print("Invalid option")
+                print(f"{RED}Invalid option{RESET}")
                 continue
             if choice != 1:
-                print("Invalid option")
+                print(f"{RED}Invalid option{RESET}")
                 continue
             continue
 
 
         if menu_choice == 5:
             print(LINE)
-            print("PORTFOLIO")
+            print(f"{BOLD}{CYAN}PORTFOLIO{RESET}")
             print(LINE)
 
             cur.execute(
@@ -480,7 +488,7 @@ try:
             holdings = cur.fetchall()
             portfolio_value = 0
             if len(holdings) == 0:
-                print("No holdings found")
+                print(f"{YELLOW}No holdings found{RESET}")
             else:
                 for symbol, shares in holdings:
                     price = get_price(symbol)
@@ -500,17 +508,17 @@ try:
             try:
                 choice = int(input("> "))
             except ValueError:
-                print("Invalid option")
+                print(f"{RED}Invalid option{RESET}")
                 continue
             if choice != 1:
-                print("Invalid option")
+                print(f"{RED}Invalid option{RESET}")
                 continue
             continue
 
 
         if menu_choice == 6:
             print(LINE)
-            print("ACCOUNT INFO")
+            print(f"{BOLD}{CYAN}ACCOUNT INFO{RESET}")
             print(LINE)
 
             print("Username:", user[1])
@@ -530,7 +538,7 @@ try:
             try:
                 choice = int(input("> "))
             except ValueError:
-                print("Invalid input")
+                print(f"{RED}Invalid input{RESET}")
                 continue
 except KeyboardInterrupt:
     print("\nbyeee.")
