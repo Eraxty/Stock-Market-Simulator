@@ -5,6 +5,7 @@ from dotenv import load_dotenv
 import requests
 from pyfiglet import Figlet
 from stock_api import *
+from graph import plot_history
 
 f = Figlet(font='slant')
 print(f.renderText('Stock Market Simulator'))
