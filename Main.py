@@ -280,7 +280,7 @@ try:
             print("Invalid option")
             continue
 
-        if menu_choice not in (1, 2, 3, 4, 5):
+        if menu_choice not in (1, 2, 3, 4, 5, 6):
             print("Invalid option")
             continue
 
@@ -461,8 +461,12 @@ try:
             try:
                 choice = int(input("> "))
             except ValueError:
-                print("Invalid input")
+                print("Invalid option")
                 continue
+            if choice != 1:
+                print("Invalid option")
+                continue
+            continue
 
 
         if menu_choice == 5:
@@ -495,8 +499,12 @@ try:
             try:
                 choice = int(input("> "))
             except ValueError:
-                print("Invalid input")
+                print("Invalid option")
                 continue
+            if choice != 1:
+                print("Invalid option")
+                continue
+            continue
 
 
         if menu_choice == 6:
