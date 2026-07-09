@@ -270,7 +270,8 @@ try:
         print("2.Buy Stocks")
         print("3.Sell Stocks")
         print("4.Transaction history")
-        print("5.Account info")
+        print("5.Portfolio")
+        print("6.Account info")
         print(LINE)
 
         try:
@@ -462,9 +463,43 @@ try:
             except ValueError:
                 print("Invalid input")
                 continue
-        
+
 
         if menu_choice == 5:
+            print(LINE)
+            print("PORTFOLIO")
+            print(LINE)
+
+            cur.execute(
+                "SELECT symbol, shares FROM portfolio WHERE username = ?",(user[1],))
+            holdings = cur.fetchall()
+            portfolio_value = 0
+            if len(holdings) == 0:
+                print("No holdings found")
+            else:
+                for symbol, shares in holdings:
+                    price = get_price(symbol)
+                    value = price * shares
+                    portfolio_value += value
+                    print(symbol)
+                    print(f"Shares : {shares}")
+                    print(f"Price  : ${price:.2f}")
+                    print(f"Value  : ${value:.2f}")
+                    print(LINE)
+            cash = get_balance()
+            print(f"Cash            : ${cash:.2f}")
+            print(f"Portfolio Value : ${portfolio_value:.2f}")
+            print(f"Net Worth       : ${cash + portfolio_value:.2f}")
+            print(LINE)
+            print("1. Go Back")
+            try:
+                choice = int(input("> "))
+            except ValueError:
+                print("Invalid input")
+                continue
+
+
+        if menu_choice == 6:
             print(LINE)
             print("ACCOUNT INFO")
             print(LINE)
