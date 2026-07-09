@@ -1,108 +1,137 @@
 # Stock Market Simulator
-This is a local stock market simulator made using python and SQLite.
+
+This is a local stock market simulator made using Python and SQLite. The simulator uses live stock market data and lets users buy and sell stocks through virtual money.
 
 ## Features
-
-* User creation and Login
-* Password hashing before storing passwords in db
+* User creation and login
+* Password hashing before storing passwords
+* Live stock prices using the Finnhub API
+* Company information (market cap, industry, exchange, open/high/low)
+* Historical stock graphs using Yahoo Finance
 * Buying and selling stocks
-* Transaction history 
-* stock market with changing prices
+* Portfolio management
+* Net worth calculation
+* Transaction history with timestamps
+* Input validation and error handling
+* Colored terminal interface
 
 ## Modules Used
 
-* SQLite3
-* Hashlib
-* Random
-* Time
+* sqlite3
+* hashlib
+* requests
+* python-dotenv
+* pyFiglet
+* plotext
+* yfinance
 
 ## Database Structure
-it contains 4 tables 
 
-* portfolio
-* stocks 
-* transactions 
+The project contains four tables.
+
 * users
-
+* stocks
+* portfolio
+* transactions
 
 ### Available Stocks
-Currently, there are 10 stocks available for trading.
 
-| ID | Symbol |
-| -- | ------ |
-| 1  | AAPL   |
-| 2  | NASDAQ |
-| 3  | TSLA   |
-| 4  | NVDA   |
-| 5  | MSFT   |
-| 6  | GOOGL  |
-| 7  | AMZN   |
-| 8  | META   |
-| 9  | AMD    |
-| 10 | INTC   |
+Currently, there are 9 stocks available for trading.
 
+| Symbol |
+| ------ |
+| AAPL |
+| TSLA |
+| NVDA |
+| MSFT |
+| GOOGL |
+| AMZN |
+| META |
+| AMD |
+| INTC |
 
-### Transactions
-All the buy and sell history is tracked in transactions table in the db.
+## Transactions
 
-## How It Works
-The market updates every 30 seconds. Each stock price is modified by a randomly selected market event, such as:
+Every transaction stores:
 
-* Crash
-* Boom
-* Bear Market
-* Bull Market
-* Stable Market
-* Small Increase
-* Small Decrease
+* Stock symbol
+* Buy/Sell type
+* Share quantity
+* Trade price
+* Total value
+* Timestamp
 
-Different events have different Weights (probability)
-
-## Platform Support
-
-This release was built and tested on **Linux (Arch Linux x86_64)** using PyInstaller.
-
-The executable included in the GitHub Release is intended for Linux systems. Users on Windows or mac should run the project from source using python.
 
 ## Running from Source
-
 ### Requirements
-- Python 3.10+
-- SQLite3
+
+* requests
+* python-dotenv
+* pyfiglet
+* plotext
+* yfinance
 
 ### Installation
-
-1. Clone the repository:
+Clone the repository.
 
 ```bash
 git clone https://github.com/Eraxty/Stock-Market-Simulator.git
 cd Stock-Market-Simulator
 ```
 
-2. Run the program:
+Create a virtual environment.
+
+```bash
+python -m venv .venv
+```
+
+Activate it.
+
+```bash
+source .venv/bin/activate
+```
+
+For Fish shell:
+
+```bash
+source .venv/bin/activate.fish
+```
+
+Install the required packages.
+
+```bash
+pip install -r requirements.txt
+```
+
+Run the program.
 
 ```bash
 python Main.py
 ```
+
 ## Workflow
 
 1. Create an account
 2. Log in
-3. View available stocks
-4. Buy shares
-5. View transaction history
-6. Sell shares
-7. Track portfolio and account balance
-8. Make as much money as possible
+3. Browse live stock prices
+4. View company information and graphs
+5. Buy stocks
+6. Track your portfolio and net worth
+7. View transaction history
+8. Sell stocks
 
 ## Future Improvements
 
-* Portfolio value calculation
-* Net worth tracking
-* Improved transaction history display
-* Better input validation
-* GUI
-## Screenshots 
+* Profit/Loss tracking
+* Watchlist
+* Search stocks
+* GUI version
+
+## Screenshots
+
+### Home Screen
+![Home Screen](home.png)
+
 ### Login Screen
 
 ![Login Screen](img2.png)
@@ -111,5 +140,8 @@ python Main.py
 
 ![Main Menu](image.png)
 
-## -
-Built as a Python and SQLite learning project.
+### Stock info
+
+![info](graph.png)
+
+-Built as a Python and SQLite learning project.
