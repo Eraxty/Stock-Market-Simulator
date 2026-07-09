@@ -9,6 +9,8 @@ from stock_api import *
 f = Figlet(font='slant')
 print(f.renderText('Stock Market Simulator'))
 
+LINE = "-" * 32
+
 
 def get_api_key():
     load_dotenv()
@@ -76,28 +78,28 @@ update_prices()
 
 logged_in = False
 while not logged_in:
-    print("--------------------------------")
+    print(LINE)
     print("1. Login")
     print("2. Create Account")
-    print("--------------------------------")
+    print(LINE)
 
     login_choice = input("> ")
 
     if login_choice == "1":
         while True:
-            print("--------------------------------")
+            print(LINE)
             username = input("Enter username: ")
-            print("--------------------------------")
+            print(LINE)
             cur.execute("SELECT * FROM users WHERE username = ?",(username,)) #search for username
             user = cur.fetchone()
 
             if user is None: #username not found
-                print("--------------------------------")
+                print(LINE)
                 print("User not found")
-                print("--------------------------------")
+                print(LINE)
                 print("1. Try Again")
                 print("2. Back")
-                print("--------------------------------")
+                print(LINE)
                 choice = input("> ")
 
                 if choice == "1":
@@ -106,22 +108,22 @@ while not logged_in:
                     break
 
             while True: #username found enter password
-                print("--------------------------------")
+                print(LINE)
                 password = input("Enter password: ")
-                print("--------------------------------")
+                print(LINE)
                 pass_hash = hashlib.sha256(password.encode()).hexdigest() #hash the pass bcs storing plain text is bad
                 if pass_hash == user[3]: #compare the hashes 
-                    print("--------------------------------")
+                    print(LINE)
                     print("Login Successful")
-                    print("--------------------------------")
+                    print(LINE)
                     logged_in = True
                     break
-                print("--------------------------------")
+                print(LINE)
                 print("Wrong Password")
-                print("--------------------------------")
+                print(LINE)
                 print("1. Try Again")
                 print("2. Back")
-                print("--------------------------------")
+                print(LINE)
 
                 choice = input("> ")
 
@@ -139,9 +141,9 @@ while not logged_in:
         cur.execute("SELECT * FROM users WHERE username = ?",(username,))
 
         if cur.fetchone() != None: #check if user exist
-            print("--------------------------------")
+            print(LINE)
             print("Username already exists")
-            print("--------------------------------")
+            print(LINE)
             continue
 
         password = input("Choose password: ")
@@ -150,9 +152,9 @@ while not logged_in:
         balance = 100000 #initial balance given
         cur.execute("""INSERT INTO users (username, balance, password) VALUES (?, ?, ?)""",(username, balance ,pass_hash))
         conn.commit()
-        print("--------------------------------")
+        print(LINE)
         print("Account Created!") 
-        print("--------------------------------")
+        print(LINE)
 
 def get_balance(): #very useful function
     cur.execute("SELECT balance FROM users WHERE username = ?",(user[1],))
@@ -175,9 +177,9 @@ def show_market():
     cur.execute("SELECT id, symbol FROM stocks")
     stocks = cur.fetchall()
 
-    print("--------------------------------")
+    print(LINE)
     print("ID  SYMBOL   PRICE")
-    print("--------------------------------")
+    print(LINE)
 
     for stock_id, symbol in stocks:
         try:
@@ -185,20 +187,20 @@ def show_market():
             print(f"{stock_id:<3} {symbol:<8} ${price:.2f}")
         except Exception:
             print(f"{stock_id:<3} {symbol:<8} N/A")
-    print("--------------------------------")
+    print(LINE)
 
 
 while True:
-    print("--------------------------------") #Main Menu 
+    print(LINE) #Main Menu 
     print("Stock Market Simulator")
     print("Balance: $", round(get_balance()))
-    print("--------------------------------")
+    print(LINE)
     print("1.View Market")
     print("2.Buy Stocks")
     print("3.Sell Stocks")
     print("4.Transaction history")
     print("5.Account info")
-    print("--------------------------------")
+    print(LINE)
 
     try:
         menu_choice = int(input("> "))
@@ -246,16 +248,16 @@ while True:
         price = get_price(symbol)
         cost = price * shares
         balance = get_balance() - cost
-        print("--------------------------------")
+        print(LINE)
         print("Stock:", symbol)
         print("Price: $", price)
         print("Shares:", shares)
         print("Total Cost: $", round(cost, 2))
         print("Balance After $",balance)
-        print("--------------------------------")
+        print(LINE)
         print("1. Confirm")
         print("2. Cancel")
-        print("--------------------------------")
+        print(LINE)
 
         confirm = input("> ")
 
@@ -296,16 +298,16 @@ while True:
             print("No holdings found")
             continue
 
-        print("--------------------------------")
+        print(LINE)
         print("YOUR HOLDINGS")
-        print("--------------------------------")
+        print(LINE)
 
         n = 1
         for h in holdings:
             print(f"{n:<3} {h[1]:<8} {h[2]}")
             n = n + 1
 
-        print("--------------------------------")
+        print(LINE)
 
         try:
             choice = int(input("Sell> "))
@@ -332,16 +334,16 @@ while True:
         sale_value = price * shares
         
         #menu for sale
-        print("--------------------------------") 
+        print(LINE) 
         print("Stock:", symbol)
         print("Price: $", price)
         print("Shares:", shares)
         print("You Receive: $", round(sale_value, 2))
         print("Balance After: $", round(get_balance() + sale_value, 2))
-        print("--------------------------------")
+        print(LINE)
         print("1. Confirm")
         print("2. Cancel")
-        print("--------------------------------")
+        print(LINE)
 
         confirm = input("> ")
 
@@ -377,9 +379,9 @@ while True:
         """,(user[0],))
         transactions = cur.fetchall()
 
-        print("--------------------------------")
+        print(LINE)
         print("TRANSACTION HISTORY")
-        print("--------------------------------")
+        print(LINE)
 
         for t in transactions: #display transactions
             total = t[2] * t[3]
@@ -388,8 +390,8 @@ while True:
             print("Price: $", round(t[3], 2), sep="")
             print("Total: $", round(total, 2), sep="")
             print("Time:", t[4])
-        print("--------------------------------")
-        print("--------------------------------")
+        print(LINE)
+        print(LINE)
         print("1. Go Back")
         try:
             choice = int(input("> "))
@@ -399,9 +401,9 @@ while True:
     
 
     if menu_choice == 5:
-        print("--------------------------------")
+        print(LINE)
         print("ACCOUNT INFO")
-        print("--------------------------------")
+        print(LINE)
 
         print("Username:", user[1])
         print("Balance: $", round(get_balance(), 2))
@@ -415,10 +417,11 @@ while True:
             total_shares = 0
 
         print("Total Shares:", total_shares)
-        print("--------------------------------")
+        print(LINE)
         print("1. Go Back")
         try:
             choice = int(input("> "))
         except ValueError:
             print("Invalid input")
             continue
+conn.close()
