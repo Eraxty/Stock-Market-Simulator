@@ -3,3 +3,4 @@ python-dotenv
 pyfiglet
 plotext
 yfinance
+pyinstaller
