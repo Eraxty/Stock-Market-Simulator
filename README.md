@@ -61,6 +61,15 @@ Every transaction stores:
 * Total value
 * Timestamp
 
+## 📦 Linux Release
+
+A Linux executable **Linux (x86_64)** is available in the release section.
+
+```bash
+./Main
+```
+
+- The sim stores its data in a local SQLite database (`stock_sim.db`)
 
 ## Running from Source
 ### Requirements
